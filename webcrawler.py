@@ -145,9 +145,29 @@ sock = socket.socket(*socket_info)
 sock.connect(sock_addr)
 
 sock.sendto('GET /accounts/login/?next=/fakebook/\r\nHost:fring.ccs.neu.edu\r\n\r\n', sock_addr)
+
+
+this = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
+'Host: fring.ccs.neu.edu\r\n'
+'Connection: keep-alive\r\n'
+'Pragma: no-cache\r\n'
+'Cache-Control: no-cache\r\n'
+'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
+'Upgrade-Insecure-Requests: 1\r\n'
+'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
+'Referer: http://fring.ccs.neu.edu/\r\n'
+'Accept-Encoding: gzip, deflate, sdch\r\n'
+'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
+
+# this is exactly what chrome would send
+#sock.sendto(this, sock_addr)
+
 server_msg = sock.recvfrom(100000000)
 
 html = server_msg[0]
 what_is_this = server_msg[1]
 
 print html
+
+
+#def grab_html(resource, ):
