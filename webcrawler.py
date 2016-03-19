@@ -140,7 +140,7 @@ chrome_example = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
 'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
 'Referer: http://fring.ccs.neu.edu/\r\n'
 'Accept-Encoding: gzip, deflate, sdch\r\n'
-'Accept-Language: en-US,en;q=0.8)\r\n\r\n'
+'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
 
 # -------------------------------------------------------------------------------------------------------------
 
@@ -159,8 +159,6 @@ sock.connect(sock_addr)
 
 sock.sendto('GET /accounts/login/?next=/fakebook/\r\nHost:fring.ccs.neu.edu\r\n\r\n', sock_addr)
 
-
-)
 
 # this is exactly what chrome would send
 #sock.sendto(chrome_example, sock_addr)
