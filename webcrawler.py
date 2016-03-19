@@ -132,15 +132,16 @@ print ("HTTP/1.0 200 OK")
 
 chrome_example = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
 'Host: fring.ccs.neu.edu\r\n'
-'Connection: keep-alive\r\n'
-'Pragma: no-cache\r\n'
-'Cache-Control: no-cache\r\n'
-'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-'Upgrade-Insecure-Requests: 1\r\n'
-'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
-'Referer: http://fring.ccs.neu.edu/\r\n'
-'Accept-Encoding: gzip, deflate, sdch\r\n'
-'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
+#'Connection: keep-alive\r\n'
+#'Pragma: no-cache\r\n'
+#'Cache-Control: no-cache\r\n'
+#'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
+#'Upgrade-Insecure-Requests: 1\r\n'
+#'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
+#'Referer: http://fring.ccs.neu.edu/\r\n'
+#'Accept-Encoding: gzip, deflate, sdch\r\n'
+#'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
+'\r\n')
 
 # -------------------------------------------------------------------------------------------------------------
 
@@ -150,25 +151,55 @@ sock_addr = addrinfo[-1]
 
 socket_info = addrinfo[:3]
 
-print sock_addr
-print socket_info
-
 sock = socket.socket(*socket_info)
 
 sock.connect(sock_addr)
 
-sock.sendto('GET /accounts/login/?next=/fakebook/\r\nHost:fring.ccs.neu.edu\r\n\r\n', sock_addr)
+
+login_req = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
+'Host: fring.ccs.neu.edu\r\n'
+'Connection: keep-alive\r\n'
+'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
+#'Accept-Encoding: gzip, deflate, sdch\r\n'
+'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
 
 
-# this is exactly what chrome would send
-#sock.sendto(chrome_example, sock_addr)
+# operation resource_path HTTP/1.1\r\nHost:hostname
+sock.sendto(login_req, sock_addr)
 
+
+
+# sends headers first
 server_msg = sock.recvfrom(100000000)
+header = server_msg[0]
+# sends body next
+server_msg2 = sock.recvfrom(100000000)
+msg_body = server_msg2[0]
 
-html = server_msg[0]
-what_is_this = server_msg[1]
 
-print html
+#print server_msg[0]
+#print server_msg2[0]
+
+# find all links to go through
+def parse_for_links(html):
+    last = len(html)
+    links = []
+    # start from the beginning
+    first_a = 0
+    while True:
+        first_a = html.find('<a href=', first_a + 1, last)
+        if first_a == -1:
+            break
+        first_letter = first_a + 9
+        end_quote = html.find('"', first_letter, last)
+        if end_quote == -1:
+            raise ValueError("the html is formatted wrong")
+        links.append(html[first_letter: end_quote])
+    return links
 
 
-#def grab_html(resource, ):
+
+x = parse_for_links(msg_body)
+
+print x
+
