@@ -122,4 +122,6 @@ print ("HTTP/1.0 200 OK")
 # The server will send big files in chunks and tell us with this
 # Transfer-Encoding: chunked
 
-
+# may receive spontaneous responses with code 100 just to show that the server is still responding
+# we can probably ignore these, but we need to account for them
+# it is always followed by a complete response
