@@ -1,5 +1,7 @@
 #!usr/bin/python
+import socket
 
+'''
 # info about http http://www.jmarshall.com/easy/http/
 
 # GET: get a resource
@@ -47,7 +49,7 @@ print (
     'Content-Type: text/html; charset=iso-8859-1\r\n')
 
 # Google Chrome requesting the login page from fring.ccs.neu.edu (header only)
-'''
+
 # request login page
 GET /accounts/login/?next=/fakebook/ HTTP/1.1
 # the host domain
@@ -67,10 +69,10 @@ Accept-Encoding: gzip, deflate, sdch
 Accept-Language: en-US,en;q=0.8
 # this is going to matter
 Cookie: csrftoken=7e9ea60b8b86b0189db4cda3daf66f01; sessionid=59fc1cef910c3153cfa76baa8de231e0
-'''
+
 
 # Fakebook responding to Chrome (header only)
-'''
+
 # the resource exists, here you go
 HTTP/1.1 200 OK
 # kk
@@ -94,10 +96,10 @@ Connection: Keep-Alive
 Content-Type: text/html; charset=utf-8
 Request Headers
 view parsed
-'''
 
 
-'''INITIAL LINE'''
+
+#INITIAL LINE
 
 # initial request line
 # get me this resource (use 1.1 in real thing)
@@ -113,7 +115,7 @@ print ("HTTP/1.0 200 OK")
 # 4xx: client erro e.g 404 Resource not Found
 # 5xx: server error
 
-''' HEADER LINES '''
+# HEADER LINES
 
 # header lines beginning with space or tab are still part of the previous line
 # HOST is required in HTTP 1.1 but not 1.0, nothing else is mandatory
@@ -125,3 +127,27 @@ print ("HTTP/1.0 200 OK")
 # may receive spontaneous responses with code 100 just to show that the server is still responding
 # we can probably ignore these, but we need to account for them
 # it is always followed by a complete response
+
+'''
+# -------------------------------------------------------------------------------------------------------------
+
+addrinfo = socket.getaddrinfo('fring.ccs.neu.edu', 80)[0]
+
+sock_addr = addrinfo[-1]
+
+socket_info = addrinfo[:3]
+
+print sock_addr
+print socket_info
+
+sock = socket.socket(*socket_info)
+
+sock.connect(sock_addr)
+
+sock.sendto('GET /accounts/login/?next=/fakebook/\r\nHost:fring.ccs.neu.edu\r\n\r\n', sock_addr)
+server_msg = sock.recvfrom(100000000)
+
+html = server_msg[0]
+what_is_this = server_msg[1]
+
+print html
