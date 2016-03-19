@@ -130,18 +130,18 @@ print ("HTTP/1.0 200 OK")
 
 '''
 
-chrome_example = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
+"""chrome_example = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
 'Host: fring.ccs.neu.edu\r\n'
-#'Connection: keep-alive\r\n'
-#'Pragma: no-cache\r\n'
-#'Cache-Control: no-cache\r\n'
-#'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-#'Upgrade-Insecure-Requests: 1\r\n'
-#'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
-#'Referer: http://fring.ccs.neu.edu/\r\n'
-#'Accept-Encoding: gzip, deflate, sdch\r\n'
-#'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
-'\r\n')
+'Connection: keep-alive\r\n'
+'Pragma: no-cache\r\n'
+'Cache-Control: no-cache\r\n'
+'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
+'Upgrade-Insecure-Requests: 1\r\n'
+'User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36\r\n'
+'Referer: http://fring.ccs.neu.edu/\r\n'
+'Accept-Encoding: gzip, deflate, sdch\r\n'
+'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
+'\r\n')"""
 
 # -------------------------------------------------------------------------------------------------------------
 # find all links to go through
@@ -162,14 +162,14 @@ def parse_for_links(html):
     return links
 
 
-def get_page(link):
+def request_page(link, type='GET', body=''):
     global sock
     global sock_addr
-    request = ('GET {} HTTP/1.1\r\n'
+    request = ('{} {} HTTP/1.1\r\n'
                 'Host: fring.ccs.neu.edu\r\n'
-                'Connection: keep-alive\r\n'
+                #'Connection: keep-alive\r\n'
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-                'Accept-Language: en-US,en;q=0.8)\r\n\r\n').format(link)
+                'Accept-Language: en-US,en;q=0.8)\r\n\r\n{}').format(type, link, body)
     sock.sendto(request, sock_addr)
     # sends headers first
     server_msg = sock.recvfrom(100000000)
@@ -178,6 +178,21 @@ def get_page(link):
     server_msg2 = sock.recvfrom(100000000)
     msg_body = server_msg2[0]
     return (header, msg_body)
+
+def get_cookies(header):
+    # yes this is lazy, use while loop like in parse_for_links to get all cookies TODO
+    cookies = []
+    # find cookie 1
+    cookie_loc = header.find('Set-Cookie:')
+    end_cookie = header.find(';', cookie_loc, len(header))
+    cookie1 = header[cookie_loc + 12: end_cookie]
+    cookies.append(cookie1)
+    # now find cookie two
+    cookie_loc2 = header.find('Set-Cookie:', cookie_loc + 1, len(header))
+    end_cookie2 = header.find(';', cookie_loc2, len(header))
+    cookie2 = header[cookie_loc2 + 12:end_cookie2]
+    cookies.append(cookie2)
+    return cookies
 
 
 
@@ -192,37 +207,39 @@ sock = socket.socket(*socket_info)
 sock.connect(sock_addr)
 
 
-login_req = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
-'Host: fring.ccs.neu.edu\r\n'
-'Connection: keep-alive\r\n'
-'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-#'Accept-Encoding: gzip, deflate, sdch\r\n'
-'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
-
+login_req = '/accounts/login/?next=/fakebook/'
+login_post = '/accounts/login/'
 
 
 
 # operation resource_path HTTP/1.1\r\nHost:hostname
 #sock.sendto(login_req, sock_addr)
-(header, msg_body) = get_page('/accounts/login/?next=/fakebook/')
+(header, msg_body) = request_page(login_req)
 
-'''
-# sends headers first
-server_msg = sock.recvfrom(100000000)
-header = server_msg[0]
-# sends body next
-server_msg2 = sock.recvfrom(100000000)
-msg_body = server_msg2[0]
-'''
-
-#print server_msg[0]
-#print server_msg2[0]
+#print header
+#print msg_body
 
 
+# for some reason the cookie is given to us as csrftoken
+# but we need to give it back as 'csrfmiddlewaretoken'
 
+# request body to send back
+# username=<username_here>&password=<password_here>&csrfmiddlewaretoken=<csrftoken_here>&next=%2Ffakebook%2F
+cookies = get_cookies(header)
+# assume that cookies[0] is csrftoken
+csrf = cookies[0].split('=')
+csrf_val = csrf[1]
+# maybe useful in future
+'''# join together
+cookies = '&'.join(cookies)
+# replace csrftoken with the correct name
+equals_loc = cookies.find('csrftoken=')
+cookies = cookies[: equals_loc] + 'csrfmiddlewaretoken=' + cookies[equals_loc + 10:]'''
 
+login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=%2Ffakebook%2F'.format(csrf_val)
 
+(y, z) = request_page(login_post, 'POST', login_data)
 x = parse_for_links(msg_body)
 
-print x
-
+print y
+print z
