@@ -144,6 +144,42 @@ chrome_example = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
 '\r\n')
 
 # -------------------------------------------------------------------------------------------------------------
+# find all links to go through
+def parse_for_links(html):
+    last = len(html)
+    links = []
+    # start from the beginning
+    first_a = 0
+    while True:
+        first_a = html.find('<a href=', first_a + 1, last)
+        if first_a == -1:
+            break
+        first_letter = first_a + 9
+        end_quote = html.find('"', first_letter, last)
+        if end_quote == -1:
+            raise ValueError("the html is formatted wrong")
+        links.append(html[first_letter: end_quote])
+    return links
+
+
+def get_page(link):
+    global sock
+    global sock_addr
+    request = ('GET {} HTTP/1.1\r\n'
+                'Host: fring.ccs.neu.edu\r\n'
+                'Connection: keep-alive\r\n'
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
+                'Accept-Language: en-US,en;q=0.8)\r\n\r\n').format(link)
+    sock.sendto(request, sock_addr)
+    # sends headers first
+    server_msg = sock.recvfrom(100000000)
+    header = server_msg[0]
+    # sends body next
+    server_msg2 = sock.recvfrom(100000000)
+    msg_body = server_msg2[0]
+    return (header, msg_body)
+
+
 
 addrinfo = socket.getaddrinfo('fring.ccs.neu.edu', 80)[0]
 
@@ -164,38 +200,25 @@ login_req = ('GET /accounts/login/?next=/fakebook/ HTTP/1.1\r\n'
 'Accept-Language: en-US,en;q=0.8)\r\n\r\n')
 
 
+
+
 # operation resource_path HTTP/1.1\r\nHost:hostname
-sock.sendto(login_req, sock_addr)
+#sock.sendto(login_req, sock_addr)
+(header, msg_body) = get_page('/accounts/login/?next=/fakebook/')
 
-
-
+'''
 # sends headers first
 server_msg = sock.recvfrom(100000000)
 header = server_msg[0]
 # sends body next
 server_msg2 = sock.recvfrom(100000000)
 msg_body = server_msg2[0]
-
+'''
 
 #print server_msg[0]
 #print server_msg2[0]
 
-# find all links to go through
-def parse_for_links(html):
-    last = len(html)
-    links = []
-    # start from the beginning
-    first_a = 0
-    while True:
-        first_a = html.find('<a href=', first_a + 1, last)
-        if first_a == -1:
-            break
-        first_letter = first_a + 9
-        end_quote = html.find('"', first_letter, last)
-        if end_quote == -1:
-            raise ValueError("the html is formatted wrong")
-        links.append(html[first_letter: end_quote])
-    return links
+
 
 
 
