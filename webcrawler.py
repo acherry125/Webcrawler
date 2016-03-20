@@ -162,14 +162,18 @@ def parse_for_links(html):
     return links
 
 
-def request_page(link, type='GET', body=''):
+def request_page(link, cookies='', type='GET', body='',):
     global sock
     global sock_addr
+    if cookies:
+        joined = '; '.join(cookies)
+        cookie_head = 'Cookie: {}\r\n'.format(joined)
     request = ('{} {} HTTP/1.1\r\n'
                 'Host: fring.ccs.neu.edu\r\n'
-                #'Connection: keep-alive\r\n'
+                'Connection: keep-alive\r\n'
+                'Cookie:{}\r\n'
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-                'Accept-Language: en-US,en;q=0.8)\r\n\r\n{}').format(type, link, body)
+                'Accept-Language: en-US,en;q=0.8)\r\n\r\n{}').format(type, link, cookies, body)
     sock.sendto(request, sock_addr)
     # sends headers first
     server_msg = sock.recvfrom(100000000)
@@ -238,8 +242,7 @@ cookies = cookies[: equals_loc] + 'csrfmiddlewaretoken=' + cookies[equals_loc + 
 
 login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=%2Ffakebook%2F'.format(csrf_val)
 
-(y, z) = request_page(login_post, 'POST', login_data)
-x = parse_for_links(msg_body)
+(y, z) = request_page(login_post, cookies, 'POST', login_data)
 
 print y
 print z
