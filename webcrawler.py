@@ -165,15 +165,18 @@ def parse_for_links(html):
 def request_page(link, cookies='', type='GET', body='',):
     global sock
     global sock_addr
+    # display as string 'cookie_name:value; cookie_name:value'
     if cookies:
-        joined = '; '.join(cookies)
-        cookie_head = 'Cookie: {}\r\n'.format(joined)
+        cookie_value = '; '.join(cookies)
+    else:
+        cookie_value = ''
     request = ('{} {} HTTP/1.1\r\n'
                 'Host: fring.ccs.neu.edu\r\n'
                 'Connection: keep-alive\r\n'
                 'Cookie:{}\r\n'
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
-                'Accept-Language: en-US,en;q=0.8)\r\n\r\n{}').format(type, link, cookies, body)
+                'Accept-Language: en-US,en;q=0.8)\r\n\r\n{}').format(type, link, cookie_value, body)
+    
     sock.sendto(request, sock_addr)
     # sends headers first
     server_msg = sock.recvfrom(100000000)
