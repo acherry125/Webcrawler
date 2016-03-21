@@ -183,11 +183,15 @@ def request_page(link, cookies=None, type='GET', body='', ):
     log('rec1 {} {}'.format(type, link))
     header = server_msg[0]
     msg_body = ''
-    if get_length(header) > 0:
-        # sends body next
-        server_msg2 = sock.recvfrom(100000000)
-        log('rec2 {} {}'.format(type, link))
-        msg_body = server_msg2[0]
+    received = 0
+    length = get_length(header)
+    if length > 0:
+        while received < length:
+            # sends body next
+            server_msg2 = sock.recvfrom(100000000)
+            received += len(server_msg2[0])
+            log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
+            msg_body = msg_body + server_msg2[0]
 
     return (header, msg_body)
 
@@ -284,7 +288,9 @@ if login:
     # WE ARE LOGGED IN
 
     # start link gathering and searching (make sure not to go infinitely when experimenting)
-    log('{}'.format(get_links(fakebook_home)))
+    x = get_links(fakebook_home)
+    log('{}'.format(x))
+    print 'done'
 
 # just some little unit tests... we should use these more
 assert get_links('where is the link???? <a href="tjetje"> oh it was right there') == ["tjetje"]
