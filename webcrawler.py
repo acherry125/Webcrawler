@@ -231,7 +231,7 @@ def connect_to_server(server='fring.ccs.neu.edu', port=80):
     sock.connect(sock_addr)
 
 # for debugging purposes, logging in take a bit
-login = False
+login = True
 
 if login:
     # initial connection
