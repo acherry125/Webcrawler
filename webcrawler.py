@@ -1,5 +1,7 @@
 #!usr/bin/python
 import socket
+import sys
+import datetime
 
 '''
 # info about http http://www.jmarshall.com/easy/http/
@@ -145,12 +147,16 @@ print ("HTTP/1.0 200 OK")
 
 # -------------------------------------------------------------------------------------------------------------
 
+def log(string):
+  sys.stderr.write(datetime.datetime.now().strftime("%H:%M:%S.%f") + " " + string + "\n")
+
 # requests a page/resource
 def request_page(link, cookies=None, type='GET', body='', ):
     if cookies is None:
         cookies = []
     global sock
     global sock_addr
+    log('starting request {} {}'.format(type, link))
     # is there a body
     if body:
         content_length = 'Content-Length: {}\r\n'.format(len(body))
@@ -169,15 +175,19 @@ def request_page(link, cookies=None, type='GET', body='', ):
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
                 'Accept-Language: en-US,en;q=0.8)\r\n\r\n'
                 '{}').format(type, link, content_length, cookie_value, body)
-    print request
+    log('request created {} {}'.format(type, link))
     sock.sendto(request, sock_addr)
+    log('sent {} {}'.format(type, link))
     # sends headers first
     server_msg = sock.recvfrom(100000000)
+    log('rec1 {} {}'.format(type, link))
     header = server_msg[0]
-
-    # sends body next
-    server_msg2 = sock.recvfrom(100000000)
-    msg_body = server_msg2[0]
+    msg_body = ''
+    if get_length(header) > 0:
+        # sends body next
+        server_msg2 = sock.recvfrom(100000000)
+        log('rec2 {} {}'.format(type, link))
+        msg_body = server_msg2[0]
 
     return (header, msg_body)
 
@@ -188,6 +198,13 @@ def get_cookies(header):
 # find all hyperlinks in an html document
 def get_links(html):
     return get_helper(html, '<a href="', '"')
+
+def get_length(html):
+    length = get_helper(html, 'Content-Length: ', '\r\n')
+    if length:
+        return int(length[0])
+    else:
+        return 0
 
 def get_secret_flags(html):
     # may have to add space after FLAG: later
@@ -236,34 +253,38 @@ login = True
 if login:
     # initial connection
     connect_to_server()
-
+    log('connected')
     # the login page path
     login_post = '/accounts/login/'
     # get the initial login page
     (header, msg_body) = request_page(login_post)
-
+    log('got login page')
     # username=<username_here>&password=<password_here>&csrfmiddlewaretoken=<csrftoken_here>&next=%2Ffakebook%2F
     cookies = get_cookies(header)
+    log('got cookies')
     # assume that cookies[0] is csrftoken
     csrf = cookies[0].split('=')
     # dont merge these
     csrf_val = csrf[1]
 
     login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
-
+    log('made login data')
     (login_redirect_header, login_ignore) = request_page(login_post, cookies, 'POST', login_data)
+    log('made login request')
 
     # get the new session id
     session_id = get_cookies(login_redirect_header)
+    log('got session id')
     # have to reset the connection for some reason
     connect_to_server()
-    (succes_header, fakebook_home) = request_page('/fakebook/', session_id)
+    log('connected to server again')
+    (success_header, fakebook_home) = request_page('/fakebook/', session_id)
+    log('succeeded')
     #---------------------------------------------------------------------------------
     # WE ARE LOGGED IN
 
     # start link gathering and searching (make sure not to go infinitely when experimenting)
-
-    print get_links(fakebook_home)
+    log('{}'.format(get_links(fakebook_home)))
 
 # just some little unit tests... we should use these more
 assert get_links('where is the link???? <a href="tjetje"> oh it was right there') == ["tjetje"]
