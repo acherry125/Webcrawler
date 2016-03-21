@@ -145,24 +145,6 @@ print ("HTTP/1.0 200 OK")
 
 # -------------------------------------------------------------------------------------------------------------
 
-
-# find all hyperlinks in an html document
-def parse_links(html):
-    last = len(html)
-    links = []
-    # start from the beginning
-    first_a = 0
-    while True:
-        first_a = html.find('<a href=', first_a + 1, last)
-        if first_a == -1:
-            break
-        first_letter = first_a + 9
-        end_quote = html.find('"', first_letter, last)
-        if end_quote == -1:
-            raise ValueError("the html is formatted wrong")
-        links.append(html[first_letter: end_quote])
-    return links
-
 # requests a page/resource
 def request_page(link, cookies=None, type='GET', body='', ):
     if cookies is None:
@@ -200,22 +182,28 @@ def request_page(link, cookies=None, type='GET', body='', ):
     return (header, msg_body)
 
 # gets the cookies in a response header
-# TODO extrapolare common code between get_cookies and parse_links
 def get_cookies(header):
-    # yes this is lazy, use while loop like in parse_for_links to get all cookies TODO
-    cookies = []
-    cookie_loc = 0
+    return get_helper(header, 'Set-Cookie:', ';', 0, 12)
+
+# find all hyperlinks in an html document
+def get_links(html):
+    return get_helper(html, '<a href=', '"', 9, 0)
+
+# helps the parsers
+def get_helper(resource, start, end, offset1, offset2):
+    found = []
+    loc = 0
     while True:
         # find cookie 1
-        cookie_loc = header.find('Set-Cookie:', cookie_loc + 1, len(header))
-        if cookie_loc == -1:
+        loc = resource.find(start, loc + 1, len(resource))
+        if loc == -1:
             break
-        end_cookie = header.find(';', cookie_loc, len(header))
-        if end_cookie == -1:
-            raise ValueError("the http is formatted wrong")
-        cookie = header[cookie_loc + 12: end_cookie]
-        cookies.append(cookie)
-    return cookies
+        option_loc = loc + offset1
+        end_loc = resource.find(end, option_loc, len(resource))
+        if end_loc == -1:
+            raise ValueError("the resource is formatted wrong")
+        found.append(resource[option_loc + offset2: end_loc])
+    return found
 
 # connects the socket to the server
 def connect_to_server(server='fring.ccs.neu.edu', port=80):
@@ -258,4 +246,9 @@ connect_to_server()
 (succes_header, fakebook_home) = request_page('/fakebook/', session_id)
 #---------------------------------------------------------------------------------
 # WE ARE LOGGED IN
-print parse_links(fakebook_home)
+
+# start link gathering and searching (make sure not to go infinitely when experimenting)
+
+
+
+print get_links(fakebook_home)
