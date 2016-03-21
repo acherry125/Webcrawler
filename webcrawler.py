@@ -183,26 +183,36 @@ def request_page(link, cookies=None, type='GET', body='', ):
 
 # gets the cookies in a response header
 def get_cookies(header):
-    return get_helper(header, 'Set-Cookie:', ';', 0, 12)
+    return get_helper(header, 'Set-Cookie: ', ';')
 
 # find all hyperlinks in an html document
 def get_links(html):
-    return get_helper(html, '<a href=', '"', 9, 0)
+    return get_helper(html, '<a href="', '"')
+
+def get_secret_flags(html):
+    # may have to add space after FLAG: later
+    result = get_helper(html, "class='secret_flag' style=\"color:red\">FLAG:", '</h2>', )
+    # might be able to factor down to just 'return result', but this is just ot be safe
+    if result:
+        return result
+    else:
+        return False
 
 # helps the parsers
-def get_helper(resource, start, end, offset1, offset2):
+def get_helper(resource, start, end):
     found = []
     loc = 0
+    offset = len(start)
     while True:
         # find cookie 1
         loc = resource.find(start, loc + 1, len(resource))
         if loc == -1:
             break
-        option_loc = loc + offset1
-        end_loc = resource.find(end, option_loc, len(resource))
+        val_loc = loc + offset
+        end_loc = resource.find(end, val_loc, len(resource))
         if end_loc == -1:
             raise ValueError("the resource is formatted wrong")
-        found.append(resource[option_loc + offset2: end_loc])
+        found.append(resource[val_loc: end_loc])
     return found
 
 # connects the socket to the server
@@ -220,35 +230,41 @@ def connect_to_server(server='fring.ccs.neu.edu', port=80):
 
     sock.connect(sock_addr)
 
-# initial connection
-connect_to_server()
+# for debugging purposes, logging in take a bit
+login = False
 
-# the login page path
-login_post = '/accounts/login/'
-# get the initial login page
-(header, msg_body) = request_page(login_post)
+if login:
+    # initial connection
+    connect_to_server()
 
-# username=<username_here>&password=<password_here>&csrfmiddlewaretoken=<csrftoken_here>&next=%2Ffakebook%2F
-cookies = get_cookies(header)
-# assume that cookies[0] is csrftoken
-csrf = cookies[0].split('=')
-# dont merge these
-csrf_val = csrf[1]
+    # the login page path
+    login_post = '/accounts/login/'
+    # get the initial login page
+    (header, msg_body) = request_page(login_post)
 
-login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
+    # username=<username_here>&password=<password_here>&csrfmiddlewaretoken=<csrftoken_here>&next=%2Ffakebook%2F
+    cookies = get_cookies(header)
+    # assume that cookies[0] is csrftoken
+    csrf = cookies[0].split('=')
+    # dont merge these
+    csrf_val = csrf[1]
 
-(login_redirect_header, login_ignore) = request_page(login_post, cookies, 'POST', login_data)
+    login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
 
-# get the new session id
-session_id = get_cookies(login_redirect_header)
-# have to reset the connection for some reason
-connect_to_server()
-(succes_header, fakebook_home) = request_page('/fakebook/', session_id)
-#---------------------------------------------------------------------------------
-# WE ARE LOGGED IN
+    (login_redirect_header, login_ignore) = request_page(login_post, cookies, 'POST', login_data)
 
-# start link gathering and searching (make sure not to go infinitely when experimenting)
+    # get the new session id
+    session_id = get_cookies(login_redirect_header)
+    # have to reset the connection for some reason
+    connect_to_server()
+    (succes_header, fakebook_home) = request_page('/fakebook/', session_id)
+    #---------------------------------------------------------------------------------
+    # WE ARE LOGGED IN
 
+    # start link gathering and searching (make sure not to go infinitely when experimenting)
 
+    print get_links(fakebook_home)
 
-print get_links(fakebook_home)
+# just some little unit tests... we should use these more
+assert get_links('where is the link???? <a href="tjetje"> oh it was right there') == ["tjetje"]
+assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG:3243424235345345</h2> is it????') == ['3243424235345345']
