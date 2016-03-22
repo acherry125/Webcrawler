@@ -185,6 +185,7 @@ def request_page(link, cookies=None, type='GET', body='', ):
     msg_body = ''
     received = 0
     length = get_length(header)
+    # use get_chunked somehow to figure out what to do for chunked pages
     if length > 0:
         #while received < length:
         # sends body next
@@ -213,9 +214,16 @@ def get_length(html):
     else:
         return 0
 
+def get_chunked(header):
+    chunked = get_helper(header, 'Transfer-Encoding: ', '\r\n')
+    if chunked == 'chunked':
+        return True
+    else:
+        return False
+
 def get_secret_flags(html):
     # may have to add space after FLAG: later
-    result = get_helper(html, "class='secret_flag' style=\"color:red\">FLAG:", '</h2>', )
+    result = get_helper(html, "class='secret_flag' style=\"color:red\">FLAG: ", '</h2>', )
     # might be able to factor down to just 'return result', but this is just ot be safe
     if result:
         return result
@@ -301,6 +309,8 @@ if login:
 
     # have to deal with chunk-encoding
     while True:
+        if secret_flags:
+            print len(secret_flags)
         iter = master_list[master_pointer:]
         for link in iter:
             connect_to_server()
@@ -314,7 +324,7 @@ if login:
             key = get_secret_flags(html)
             if key:
                 print key
-                sys.exit(0)
+                #sys.exit(0)
                 secret_flags.append(key)
                 if len(secret_flags) > 4:
                     break
@@ -324,4 +334,5 @@ if login:
 
 # just some little unit tests... we should use these more
 assert get_links('where is the link???? <a href="/login"> oh it was right there', []) == ["/login"]
-assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG:3243424235345345</h2> is it????') == ['3243424235345345']
+assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG: 3243424235345345</h2> is it????') == ['3243424235345345']
+assert get_chunked('here is the Transfer-Encoding: chunked\r\n chunk') == 'chunked'
