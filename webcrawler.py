@@ -186,12 +186,12 @@ def request_page(link, cookies=None, type='GET', body='', ):
     received = 0
     length = get_length(header)
     if length > 0:
-        while received < length:
-            # sends body next
-            server_msg2 = sock.recvfrom(100000000)
-            received += len(server_msg2[0])
-            log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
-            msg_body = msg_body + server_msg2[0]
+        #while received < length:
+        # sends body next
+        server_msg2 = sock.recvfrom(100000000)
+        received += len(server_msg2[0])
+        log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
+        msg_body = msg_body + server_msg2[0]
 
     return (header, msg_body)
 
@@ -201,7 +201,10 @@ def get_cookies(header):
 
 # find all hyperlinks in an html document
 def get_links(html):
-    return get_helper(html, '<a href="', '"')
+    all_links = get_helper(html, '<a href="', '"')
+    good_links = [x for x in all_links if x[0] == '/' or (len(x) >= 25 and x[:25] == 'http://fring.ccs.neu.edu/')]
+    return good_links
+
 
 def get_length(html):
     length = get_helper(html, 'Content-Length: ', '\r\n')
@@ -293,5 +296,5 @@ if login:
     print 'done'
 
 # just some little unit tests... we should use these more
-assert get_links('where is the link???? <a href="tjetje"> oh it was right there') == ["tjetje"]
+assert get_links('where is the link???? <a href="/login"> oh it was right there') == ["/login"]
 assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG:3243424235345345</h2> is it????') == ['3243424235345345']
