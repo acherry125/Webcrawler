@@ -35,7 +35,7 @@ print(
     'Accept-Language: en-US,en;q=0.8\r\n'
     'Cookie: csrftoken=7e9ea60b8b86b0189db4cda3daf66f01; sessionid=59fc1cef910c3153cfa76baa8de231e0\r\n')
 
-# example Fakebook Response to above request (with HOPEFULLY the correct linbe formatting I put the \r\n's in myself)
+# example Fakebook Response to above request (with HOPEFULLY the correct line formatting I put the \r\n's in myself)
 
 print (
     # initial line
@@ -85,7 +85,7 @@ Server: Apache/2.2.22 (Ubuntu)
 Content-Language: en-us
 # great
 Content-Encoding: gzip
-# is this when the page will automatically reload?
+# This is when the page will no longer be cached, and must be pulled from the server again
 Expires: Sat, 19 Mar 2016 16:47:44 GMT
 Vary: Cookie,Accept-Language,Accept-Encoding
 Cache-Control: max-age=0
@@ -235,6 +235,7 @@ def get_helper(resource, start, end):
         val_loc = loc + offset
         end_loc = resource.find(end, val_loc, len(resource))
         if end_loc == -1:
+            print resource
             raise ValueError("the resource is formatted wrong")
         found.append(resource[val_loc: end_loc])
     return found
@@ -293,33 +294,24 @@ if login:
     # start link gathering and searching (make sure not to go infinitely when experimenting)
     # here is a template for collecting the links to all friends on page one of a user's friend list
     # from this point on, it should just be a matter of checking all of the links you find for the secret flags
-    master_list = []
+    master_list = ['/fakebook/']
     master_pointer = 0
     secret_flags = []
     print master_list
-    home_links = get_links(fakebook_home, master_list)
-    log('{}'.format(home_links))
-    print 'done'
-    print master_list
 
-    (f1a, friend_one) = request_page(home_links[1], session_id)
-    friend_one_links = get_links(friend_one, master_list)
-    log('{}'.format(friend_one_links))
-    print master_list
-
-    (f1b, friend_one_friends_page) = request_page(friend_one_links[0], session_id)
-    friend_one_friends = get_links(friend_one_friends_page, master_list)
-    log('{}'.format(friend_one_friends))
-    print master_list
-    # unless we are very lucky, will print false on this run. Must loop to search all
-    for x in master_list[master_pointer:]:
-        if get_secret_flags(x):
-            secret_flags.append(x)
-        master_pointer += 1
-    print secret_flags
-    # if len(secret_flags > 5):
-    #   break
-
+    while True:
+        iter = master_list[master_pointer:]
+        for link in iter:
+            connect_to_server()
+            (header, html) = request_page(link, session_id)
+            key = get_secret_flags(html)
+            if key:
+                secret_flags.append(key)
+                if len(secret_flags) > 4:
+                    break
+            get_links(html, master_list)
+            master_pointer += 1
+        print master_pointer
 
 # just some little unit tests... we should use these more
 assert get_links('where is the link???? <a href="/login"> oh it was right there', []) == ["/login"]
