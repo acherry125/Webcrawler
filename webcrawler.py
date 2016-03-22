@@ -299,6 +299,7 @@ if login:
     secret_flags = []
     print master_list
 
+    # have to deal with chunk-encoding
     while True:
         iter = master_list[master_pointer:]
         for link in iter:
@@ -306,6 +307,8 @@ if login:
             (header, html) = request_page(link, session_id)
             key = get_secret_flags(html)
             if key:
+                print key
+                sys.exit(0)
                 secret_flags.append(key)
                 if len(secret_flags) > 4:
                     break
