@@ -35,7 +35,7 @@ print(
     'Accept-Language: en-US,en;q=0.8\r\n'
     'Cookie: csrftoken=7e9ea60b8b86b0189db4cda3daf66f01; sessionid=59fc1cef910c3153cfa76baa8de231e0\r\n')
 
-# example Fakebook Response to above request (with HOPEFULLY the correct linbe formatting I put the \r\n's in myself)
+# example Fakebook Response to above request (with HOPEFULLY the correct line formatting I put the \r\n's in myself)
 
 print (
     # initial line
@@ -85,7 +85,7 @@ Server: Apache/2.2.22 (Ubuntu)
 Content-Language: en-us
 # great
 Content-Encoding: gzip
-# is this when the page will automatically reload?
+# This is when the page will no longer be cached, and must be pulled from the server again
 Expires: Sat, 19 Mar 2016 16:47:44 GMT
 Vary: Cookie,Accept-Language,Accept-Encoding
 Cache-Control: max-age=0
@@ -286,6 +286,6 @@ if login:
     # start link gathering and searching (make sure not to go infinitely when experimenting)
     log('{}'.format(get_links(fakebook_home)))
 
-# just some little unit tests... we should use these more
+# just some little unit tests... we should use these more    I agree
 assert get_links('where is the link???? <a href="tjetje"> oh it was right there') == ["tjetje"]
 assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG:3243424235345345</h2> is it????') == ['3243424235345345']
