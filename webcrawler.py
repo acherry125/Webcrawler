@@ -190,9 +190,8 @@ def request_page(link, cookies=None, type='GET', body='', ):
         # sends body next
         server_msg2 = sock.recvfrom(100000000)
         received += len(server_msg2[0])
-        log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
+        log('rec2 {} {} {}'.format(type, link, len(server_msg2[0])))
         msg_body = msg_body + server_msg2[0]
-
     return (header, msg_body)
 
 # gets the cookies in a response header
@@ -200,9 +199,10 @@ def get_cookies(header):
     return get_helper(header, 'Set-Cookie: ', ';')
 
 # find all hyperlinks in an html document
-def get_links(html):
-    all_links = get_helper(html, '<a href="', '"')
-    good_links = [x for x in all_links if x[0] == '/' or (len(x) >= 25 and x[:25] == 'http://fring.ccs.neu.edu/')]
+def get_links(html, old_links):
+    all_links = set(get_helper(html, '<a href="', '"'))
+    good_links = [x for x in all_links if (x[0] == '/' or (len(x) >= 25 and x[:25] == 'http://fring.ccs.neu.edu/')) and x not in old_links]
+    old_links += good_links
     return good_links
 
 
@@ -291,10 +291,36 @@ if login:
     # WE ARE LOGGED IN
 
     # start link gathering and searching (make sure not to go infinitely when experimenting)
-    x = get_links(fakebook_home)
-    log('{}'.format(x))
+    # here is a template for collecting the links to all friends on page one of a user's friend list
+    # from this point on, it should just be a matter of checking all of the links you find for the secret flags
+    master_list = []
+    master_pointer = 0
+    secret_flags = []
+    print master_list
+    home_links = get_links(fakebook_home, master_list)
+    log('{}'.format(home_links))
     print 'done'
+    print master_list
+
+    (f1a, friend_one) = request_page(home_links[1], session_id)
+    friend_one_links = get_links(friend_one, master_list)
+    log('{}'.format(friend_one_links))
+    print master_list
+
+    (f1b, friend_one_friends_page) = request_page(friend_one_links[0], session_id)
+    friend_one_friends = get_links(friend_one_friends_page, master_list)
+    log('{}'.format(friend_one_friends))
+    print master_list
+    # unless we are very lucky, will print false on this run. Must loop to search all
+    for x in master_list[master_pointer:]:
+        if get_secret_flags(x):
+            secret_flags.append(x)
+        master_pointer += 1
+    print secret_flags
+    # if len(secret_flags > 5):
+    #   break
+
 
 # just some little unit tests... we should use these more
-assert get_links('where is the link???? <a href="/login"> oh it was right there') == ["/login"]
+assert get_links('where is the link???? <a href="/login"> oh it was right there', []) == ["/login"]
 assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG:3243424235345345</h2> is it????') == ['3243424235345345']
