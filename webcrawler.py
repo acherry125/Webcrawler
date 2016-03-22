@@ -305,6 +305,12 @@ if login:
         for link in iter:
             connect_to_server()
             (header, html) = request_page(link, session_id)
+            if html == '':
+                connect_to_server()
+                (header, html) = request_page(link, session_id)
+                if html == '':
+                    print header
+                    raise ValueError('the page is empty!')
             key = get_secret_flags(html)
             if key:
                 print key
