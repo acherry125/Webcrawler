@@ -11,7 +11,6 @@ def request_page(link, cookies=None, type='GET', body='', ):
     if cookies is None:
         cookies = []
     global sock
-    global sock_addr
     #log('starting request {} {}'.format(type, link))
     # is there a body
     if body:
@@ -32,27 +31,29 @@ def request_page(link, cookies=None, type='GET', body='', ):
                 'Accept-Language: en-US,en;q=0.8)\r\n\r\n'
                 '{}').format(type, link, content_length, cookie_value, body)
     #log('request created {} {}'.format(type, link))
-    sock.sendto(request, sock_addr)
+    sock.send(request)
     #log('sent {} {}'.format(type, link))
     # sends headers first
-    header = sock.recvfrom(100000000)[0]
+    message = sock.recv(10000000)
+    #header = sock.recvfrom(100000000)[0]
     #print header
     #log('rec1 {} {}'.format(type, link))
-    msg_body = ''
-    received = 0
-    length = get_length(header)
+    #msg_body = ''
+    #received = 0
+    #length = get_length(header)
     # use get_chunked somehow to figure out what to do for chunked pages
-    if length > 0:
-        #while received < length:
-        # sends body next
-        server_msg2 = sock.recvfrom(100000000)[0]
-        #print server_msg2
-        #print 'dlfhds'
-        received += len(server_msg2)
-        log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
-        msg_body = msg_body + server_msg2
+    #if length > 0:
+    #    #while received < length:
+    #    # sends body next
+    #    server_msg2 = sock.recvfrom(100000000)[0]
+    #    #print server_msg2
+    #    #print 'dlfhds'
+    #    received += len(server_msg2)
+    #    log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
+    #    msg_body = msg_body + server_msg2
     #print get_status_code(header)
-    return (header, msg_body)
+    #return (header, msg_body)
+    return message
 
 # gets the cookies in a response header
 def get_cookies(header):
@@ -207,10 +208,10 @@ if login:
 
 
 connect_to_server()
-(a, b) = request_page('/accounts/login/')
-print(a, b)
-print('ab printed')
-cookies = get_cookies(a)
+msg1 = request_page('/accounts/login/')
+print msg1
+print 'msg1 printed'
+cookies = get_cookies(msg1)
 print(cookies)
 # assume that cookies[0] is csrftoken
 csrf = cookies[0].split('=')
@@ -218,19 +219,17 @@ csrf = cookies[0].split('=')
 csrf_val = csrf[1]
 connect_to_server()
 login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
-(d, e) = request_page('/accounts/login/', cookies, 'POST', login_data)
-print(d)
-print('post printed')
-session_id = get_cookies(d)
+msg2 = request_page('/accounts/login/', cookies, 'POST', login_data)
+print(msg2)
+print('msg2 post printed')
+session_id = get_cookies(msg2)
 print session_id
-(f,g) = request_page('/fakebook/', session_id)
-print f
-print ('printed f')
-print g
-print 'printed g'
+msg3 = request_page('/fakebook/', session_id)
+print msg3
+print ('printed msg3')
 master = ['/fakebook/']
 
-links = get_links(f, master)
+links = get_links(msg3, master)
 print links
 #request_page(links[0], session_id)
 #print links
