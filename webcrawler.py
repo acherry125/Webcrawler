@@ -32,12 +32,12 @@ def request_page(link, cookies=None, type='GET', body='', ):
                 'Accept-Language: en-US,en;q=0.8)\r\n\r\n'
                 '{}').format(type, link, content_length, cookie_value, body)
     log('request created {} {}'.format(type, link))
-    sock.sendto(request, sock_addr)
+    sock.send(request)
     log('sent {} {}'.format(type, link))
     # sends headers first
-    server_msg = sock.recvfrom(100000000)
+    header = sock.recv(100000000)
+    print header
     log('rec1 {} {}'.format(type, link))
-    header = server_msg[0]
     msg_body = ''
     received = 0
     length = get_length(header)
@@ -45,15 +45,21 @@ def request_page(link, cookies=None, type='GET', body='', ):
     if length > 0:
         #while received < length:
         # sends body next
-        server_msg2 = sock.recvfrom(100000000)
-        received += len(server_msg2[0])
-        log('rec2 {} {} {}'.format(type, link, len(server_msg2[0])))
-        msg_body = msg_body + server_msg2[0]
+        server_msg2 = sock.recv(100000000)
+        print server_msg2
+        print 'dlfhds'
+        received += len(server_msg2)
+        log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
+        msg_body = msg_body + server_msg2
+    #print get_status_code(header)
     return (header, msg_body)
 
 # gets the cookies in a response header
 def get_cookies(header):
     return get_helper(header, 'Set-Cookie: ', ';')
+
+def get_status_code(header):
+    return get_helper(header, '1.1 ', ' OK')
 
 # find all hyperlinks in an html document
 def get_links(html, old_links):
