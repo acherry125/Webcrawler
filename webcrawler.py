@@ -106,7 +106,8 @@ def get_helper(resource, start, end):
         val_loc = loc + offset
         end_loc = resource.find(end, val_loc, len(resource))
         if end_loc == -1:
-            print resource
+            #print resource
+            return []
             raise ValueError("the resource is formatted wrong")
         found.append(resource[val_loc: end_loc])
     return found
@@ -127,7 +128,7 @@ def connect_to_server(server='fring.ccs.neu.edu', port=80):
     sock.connect(sock_addr)
 
 # for debugging purposes, logging in take a bit
-login = False
+login = True
 
 if login:
     connect_to_server()
@@ -173,12 +174,19 @@ if login:
                 print key
                 print link
                 #sys.exit(0)
-                secret_flags.append(key)
+                if not key in secret_flags:
+                    secret_flags.append(key)
                 if len(secret_flags) > 4:
                     break
-            get_links(server_msg, master_list)
-            master_pointer += 1
-            print master_pointer
+            if get_links(server_msg, master_list):
+                master_pointer += 1
+                print master_pointer
+            else:
+                print('reloading: current keys found {}'.format(len(secret_flags)))
+                if len(secret_flags) > 4:
+                    print secret_flags
+                    print('done!')
+                    sys.exit(0)
     #connect_to_server()
     #answ = request_page('/accounts/login/')
     #print answ
