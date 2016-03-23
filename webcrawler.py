@@ -12,7 +12,7 @@ def request_page(link, cookies=None, type='GET', body='', ):
         cookies = []
     global sock
     global sock_addr
-    log('starting request {} {}'.format(type, link))
+    #log('starting request {} {}'.format(type, link))
     # is there a body
     if body:
         content_length = 'Content-Length: {}\r\n'.format(len(body))
@@ -31,13 +31,13 @@ def request_page(link, cookies=None, type='GET', body='', ):
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n'
                 'Accept-Language: en-US,en;q=0.8)\r\n\r\n'
                 '{}').format(type, link, content_length, cookie_value, body)
-    log('request created {} {}'.format(type, link))
-    sock.send(request)
-    log('sent {} {}'.format(type, link))
+    #log('request created {} {}'.format(type, link))
+    sock.sendto(request, sock_addr)
+    #log('sent {} {}'.format(type, link))
     # sends headers first
-    header = sock.recv(100000000)
-    print header
-    log('rec1 {} {}'.format(type, link))
+    header = sock.recvfrom(100000000)[0]
+    #print header
+    #log('rec1 {} {}'.format(type, link))
     msg_body = ''
     received = 0
     length = get_length(header)
@@ -45,9 +45,9 @@ def request_page(link, cookies=None, type='GET', body='', ):
     if length > 0:
         #while received < length:
         # sends body next
-        server_msg2 = sock.recv(100000000)
-        print server_msg2
-        print 'dlfhds'
+        server_msg2 = sock.recvfrom(100000000)[0]
+        #print server_msg2
+        #print 'dlfhds'
         received += len(server_msg2)
         log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
         msg_body = msg_body + server_msg2
@@ -126,7 +126,7 @@ def connect_to_server(server='fring.ccs.neu.edu', port=80):
     sock.connect(sock_addr)
 
 # for debugging purposes, logging in take a bit
-login = True
+login = False
 
 if login:
     # initial connection
@@ -203,3 +203,34 @@ if login:
 #assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG: 3243424235345345</h2> is it????') == ['3243424235345345']
 
 #assert get_chunked('here is the Transfer-Encoding: chunked\r\n chunk') == 'chunked'
+
+
+
+connect_to_server()
+(a, b) = request_page('/accounts/login/')
+print(a, b)
+print('ab printed')
+cookies = get_cookies(a)
+print(cookies)
+# assume that cookies[0] is csrftoken
+csrf = cookies[0].split('=')
+# dont merge these
+csrf_val = csrf[1]
+connect_to_server()
+login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
+(d, e) = request_page('/accounts/login/', cookies, 'POST', login_data)
+print(d)
+print('post printed')
+session_id = get_cookies(d)
+print session_id
+(f,g) = request_page('/fakebook/', session_id)
+print f
+print ('printed f')
+print g
+print 'printed g'
+master = ['/fakebook/']
+
+links = get_links(f, master)
+print links
+#request_page(links[0], session_id)
+#print links
