@@ -163,6 +163,7 @@ if login:
 
     # have to deal with chunk-encoding
     while True:
+        reset = 0
         if secret_flags:
             print len(secret_flags)
         iter = master_list[master_pointer:]
@@ -179,14 +180,22 @@ if login:
                 if len(secret_flags) > 4:
                     break
             if get_links(server_msg, master_list):
+                reset = 0
                 master_pointer += 1
                 print master_pointer
             else:
-                print('reloading: current keys found {}'.format(len(secret_flags)))
-                if len(secret_flags) > 4:
-                    print secret_flags
-                    print('done!')
-                    sys.exit(0)
+                reset += 1
+                if reset > 10:
+                    print('Reload aborted!         : current keys found {}'.format(len(secret_flags)))
+                    reset = 0
+                    master_pointer += 1
+                    print master_pointer
+                else:
+                    print('reloading: current keys found {}'.format(len(secret_flags)))
+                    if len(secret_flags) > 4:
+                        print secret_flags
+                        print('done!')
+                        sys.exit(0)
     #connect_to_server()
     #answ = request_page('/accounts/login/')
     #print answ
