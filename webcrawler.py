@@ -209,10 +209,10 @@ if login:
 
 connect_to_server()
 msg1 = request_page('/accounts/login/')
-print msg1
-print 'msg1 printed'
+#print msg1
+#print 'msg1 printed'
 cookies = get_cookies(msg1)
-print(cookies)
+#print(cookies)
 # assume that cookies[0] is csrftoken
 csrf = cookies[0].split('=')
 # dont merge these
@@ -220,16 +220,39 @@ csrf_val = csrf[1]
 connect_to_server()
 login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
 msg2 = request_page('/accounts/login/', cookies, 'POST', login_data)
-print(msg2)
-print('msg2 post printed')
+#print(msg2)
+#print('msg2 post printed')
 session_id = get_cookies(msg2)
-print session_id
+#print session_id
 msg3 = request_page('/fakebook/', session_id)
-print msg3
-print ('printed msg3')
+#print msg3
+#print ('printed msg3')
 master = ['/fakebook/']
 
 links = get_links(msg3, master)
 print links
-#request_page(links[0], session_id)
-#print links
+
+master_list = ['/fakebook/']
+master_pointer = 0
+secret_flags = []
+print master_list
+
+# have to deal with chunk-encoding
+while True:
+    if secret_flags:
+        print len(secret_flags)
+    iter = master_list[master_pointer:]
+    for link in iter:
+        connect_to_server()
+        server_msg = request_page(link, session_id)
+        key = get_secret_flags(server_msg)
+        if key:
+            print key
+            #sys.exit(0)
+            secret_flags.append(key)
+            if len(secret_flags) > 4:
+                break
+        get_links(server_msg, master_list)
+        master_pointer += 1
+        print master_pointer
+
