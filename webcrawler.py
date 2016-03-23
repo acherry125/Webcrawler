@@ -130,41 +130,31 @@ def connect_to_server(server='fring.ccs.neu.edu', port=80):
 login = False
 
 if login:
-    # initial connection
     connect_to_server()
-    log('connected')
-    # the login page path
-    login_post = '/accounts/login/'
-    # get the initial login page
-    (header, msg_body) = request_page(login_post)
-    log('got login page')
-    # username=<username_here>&password=<password_here>&csrfmiddlewaretoken=<csrftoken_here>&next=%2Ffakebook%2F
-    cookies = get_cookies(header)
-    log('got cookies')
+    msg1 = request_page('/accounts/login/')
+    #print msg1
+    #print 'msg1 printed'
+    cookies = get_cookies(msg1)
+    #print(cookies)
     # assume that cookies[0] is csrftoken
     csrf = cookies[0].split('=')
     # dont merge these
     csrf_val = csrf[1]
-
-    login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
-    log('made login data')
-    (login_redirect_header, login_ignore) = request_page(login_post, cookies, 'POST', login_data)
-    log('made login request')
-
-    # get the new session id
-    session_id = get_cookies(login_redirect_header)
-    log('got session id')
-    # have to reset the connection for some reason
     connect_to_server()
-    log('connected to server again')
-    (success_header, fakebook_home) = request_page('/fakebook/', session_id)
-    log('succeeded')
-    #---------------------------------------------------------------------------------
-    # WE ARE LOGGED IN
+    login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
+    msg2 = request_page('/accounts/login/', cookies, 'POST', login_data)
+    #print(msg2)
+    #print('msg2 post printed')
+    session_id = get_cookies(msg2)
+    #print session_id
+    msg3 = request_page('/fakebook/', session_id)
+    #print msg3
+    #print ('printed msg3')
+    master = ['/fakebook/']
 
-    # start link gathering and searching (make sure not to go infinitely when experimenting)
-    # here is a template for collecting the links to all friends on page one of a user's friend list
-    # from this point on, it should just be a matter of checking all of the links you find for the secret flags
+    links = get_links(msg3, master)
+    print links
+
     master_list = ['/fakebook/']
     master_pointer = 0
     secret_flags = []
@@ -177,82 +167,25 @@ if login:
         iter = master_list[master_pointer:]
         for link in iter:
             connect_to_server()
-            (header, html) = request_page(link, session_id)
-            if html == '':
-                connect_to_server()
-                (header, html) = request_page(link, session_id)
-                if html == '':
-                    print header
-                    raise ValueError('the page is empty!')
-            key = get_secret_flags(html)
+            server_msg = request_page(link, session_id)
+            key = get_secret_flags(server_msg)
             if key:
                 print key
+                print link
                 #sys.exit(0)
                 secret_flags.append(key)
                 if len(secret_flags) > 4:
                     break
-            get_links(html, master_list)
+            get_links(server_msg, master_list)
             master_pointer += 1
-        print master_pointer
-
-#connect_to_server()
-#answ = request_page('/accounts/login/')
-#print answ
+            print master_pointer
+    #connect_to_server()
+    #answ = request_page('/accounts/login/')
+    #print answ
 
 # just some little unit tests... we should use these more
 #assert get_links('where is the link???? <a href="/login"> oh it was right there', []) == ["/login"]
 #assert get_secret_flags('there is a secret key in here! where <h2 class=\'secret_flag\' style="color:red">FLAG: 3243424235345345</h2> is it????') == ['3243424235345345']
 
 #assert get_chunked('here is the Transfer-Encoding: chunked\r\n chunk') == 'chunked'
-
-
-
-connect_to_server()
-msg1 = request_page('/accounts/login/')
-#print msg1
-#print 'msg1 printed'
-cookies = get_cookies(msg1)
-#print(cookies)
-# assume that cookies[0] is csrftoken
-csrf = cookies[0].split('=')
-# dont merge these
-csrf_val = csrf[1]
-connect_to_server()
-login_data = 'username=001783626&password=8XOD2QE4&csrfmiddlewaretoken={}&next=/'.format(csrf_val)
-msg2 = request_page('/accounts/login/', cookies, 'POST', login_data)
-#print(msg2)
-#print('msg2 post printed')
-session_id = get_cookies(msg2)
-#print session_id
-msg3 = request_page('/fakebook/', session_id)
-#print msg3
-#print ('printed msg3')
-master = ['/fakebook/']
-
-links = get_links(msg3, master)
-print links
-
-master_list = ['/fakebook/']
-master_pointer = 0
-secret_flags = []
-print master_list
-
-# have to deal with chunk-encoding
-while True:
-    if secret_flags:
-        print len(secret_flags)
-    iter = master_list[master_pointer:]
-    for link in iter:
-        connect_to_server()
-        server_msg = request_page(link, session_id)
-        key = get_secret_flags(server_msg)
-        if key:
-            print key
-            #sys.exit(0)
-            secret_flags.append(key)
-            if len(secret_flags) > 4:
-                break
-        get_links(server_msg, master_list)
-        master_pointer += 1
-        print master_pointer
 
