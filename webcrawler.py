@@ -35,24 +35,6 @@ def request_page(link, cookies=None, type='GET', body='', ):
     #log('sent {} {}'.format(type, link))
     # sends headers first
     message = sock.recv(10000000)
-    #header = sock.recvfrom(100000000)[0]
-    #print header
-    #log('rec1 {} {}'.format(type, link))
-    #msg_body = ''
-    #received = 0
-    #length = get_length(header)
-    # use get_chunked somehow to figure out what to do for chunked pages
-    #if length > 0:
-    #    #while received < length:
-    #    # sends body next
-    #    server_msg2 = sock.recvfrom(100000000)[0]
-    #    #print server_msg2
-    #    #print 'dlfhds'
-    #    received += len(server_msg2)
-    #    log('rec2 {} {} {}'.format(type, link, len(server_msg2)))
-    #    msg_body = msg_body + server_msg2
-    #print get_status_code(header)
-    #return (header, msg_body)
     return message
 
 # gets the cookies in a response header
@@ -196,9 +178,6 @@ if login:
                         print secret_flags
                         print('done!')
                         sys.exit(0)
-    #connect_to_server()
-    #answ = request_page('/accounts/login/')
-    #print answ
 
 # just some little unit tests... we should use these more
 #assert get_links('where is the link???? <a href="/login"> oh it was right there', []) == ["/login"]
