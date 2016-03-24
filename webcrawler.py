@@ -142,7 +142,7 @@ if login:
     # dont merge these
     csrf_val = csrf[1]
     connect_to_server()
-    login_data = 'username={}&password={}&csrfmiddlewaretoken={}&next=/'.format(sys.argv[0], sys.argv[1], csrf_val)
+    login_data = 'username={}&password={}&csrfmiddlewaretoken={}&next=/'.format(sys.argv[1], sys.argv[2], csrf_val)
     msg2 = request_page('/accounts/login/', cookies, 'POST', login_data)
     #print(msg2)
     #print('msg2 post printed')
