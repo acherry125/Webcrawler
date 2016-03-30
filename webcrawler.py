@@ -1,4 +1,4 @@
-#!usr/bin/python
+#!/usr/bin/python
 import socket
 import sys
 import datetime
@@ -136,26 +136,24 @@ if login:
     master = ['/fakebook/']
 
     links = get_links(msg3, master)
-    print links
+    #print links
 
     master_list = ['/fakebook/']
     master_pointer = 0
     secret_flags = []
-    print master_list
+    # print master_list
 
     # have to deal with chunk-encoding
     while True:
         reset = 0
-        if secret_flags:
-            print len(secret_flags)
         iter = master_list[master_pointer:]
         for link in iter:
             connect_to_server()
             server_msg = request_page(link, session_id)
             key = get_secret_flags(server_msg)
             if key:
-                print key
-                print link
+                #print key
+                #print link
                 #sys.exit(0)
                 if not key in secret_flags:
                     secret_flags.append(key)
@@ -164,19 +162,20 @@ if login:
             if get_links(server_msg, master_list):
                 reset = 0
                 master_pointer += 1
-                print master_pointer
+                #print master_pointer
             else:
                 reset += 1
                 if reset > 10:
-                    print('Reload aborted!         : current keys found {}'.format(len(secret_flags)))
+                    #print('Reload aborted!         : current keys found {}'.format(len(secret_flags)))
                     reset = 0
                     master_pointer += 1
-                    print master_pointer
+                    #print master_pointer
                 else:
-                    print('reloading: current keys found {}'.format(len(secret_flags)))
+                    # print('reloading: current keys found {}'.format(len(secret_flags)))
                     if len(secret_flags) > 4:
-                        print secret_flags
-                        print('done!')
+                        for flag in secret_flags:
+                            print flag
+                        #print('done!')
                         sys.exit(0)
 
 # just some little unit tests... we should use these more
